@@ -4,6 +4,7 @@ import { PubSub } from 'graphql-subscriptions';
 
 const pubsub = new PubSub();
 
+// = gql`
 const typeDefs = `#graphql
   type User {
     id: Int
@@ -45,35 +46,36 @@ const posts = [
   { id: 1, userId: 1, body: "Let's learn GraphQL" },
 ]
 
-// запрос users возвращает объект пользователя, соответствующий переданному id;
+// запрос users возвращает объект пользователя, соответствующий переданному id
 const resolvers = {
   Query: {
     users(root, args) { return users.filter(user => user.id === args.id)[0] },
     posts(root, args) { return posts.filter(post => post.id === args.id)[0] }
   },
 
-  // распознаватель принимает данные пользователя и возвращает список его постов;
+  // в поле posts User распознаватель принимает данные пользователя и возвращает список его постов
   User: {
     posts: (user) => {
       return posts.filter(post => post.userId === user.id)
     }
   },
 
-  // функция принимает данные поста и возвращает пользователя, который опубликовал пост;
+  // в поле user Posts функция принимает данные поста и возвращает пользователя, который опубликовал пост
   Post: {
     user: (post) => {
       return users.filter(user => user.id === post.userId)[0]
     }
   },
 
-  // изменяет объект users: увеличивает количество likes для пользователя с соответствующим fname. users публикуются в pubsub с названием LIKES;
+  // мутация incrementLike изменяет объект users: увеличивает количество likes для пользователя с соответствующим fname. 
+  // После этого users публикуются в pubsub с названием LIKES
   Mutation: {
     incrementLike(parent, args) {
       users.map((user) => {
         if(user.fname === args.fname) user.likes++
         return user
       })
-      // pubsub систему передачи информации в режиме реального времени
+      // pubsub - система передачи информации в режиме реального времени с использованием вебсокетов; всё, что касается вебсокетов, вынесено в отдельные абстракции.
       pubsub.publish('LIKES', {listenLikes: users});
       return users
     }
